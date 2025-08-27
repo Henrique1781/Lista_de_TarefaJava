@@ -78,6 +78,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentDateEl = document.getElementById('current-date');
     let clockInterval = null;
 
+    const stopwatchDisplay = document.getElementById('stopwatch-display');
+    const startStopBtn = document.getElementById('start-stop-btn');
+    const resetBtn = document.getElementById('reset-btn');
+
     // --- 2. ESTADO DA APLICAÇÃO ---
     let allTasks = [];
     let currentFilter = 'all';
@@ -86,6 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let authToken = localStorage.getItem('authToken');
     const API_BASE_URL = '';
     let resolveConfirm;
+    let stopwatchInterval;
+    let stopwatchTime = 0;
+    let stopwatchRunning = false;
 
     const VAPID_PUBLIC_KEY = "BADQg1joQgGBAv-dLHlpTWwCJj5gLU_loMSC2Ajh_-FkzhLPmRsDLtDARxGX5oHHdXeJvTid_EgG6wT0hYPnQJE";
 
@@ -308,7 +315,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const emoji = categoryEmojis[task.category] || categoryEmojis['Default'];
         const formattedDate = task.date ? new Date(task.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : 'Sem data';
+        const formattedEndDate = task.endDate ? new Date(task.endDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : '';
         const timeDisplay = task.time ? task.time.substring(0, 5) : 'Sem hora';
+
+        const dateDisplay = formattedEndDate ? `${formattedDate} - ${formattedEndDate}` : formattedDate;
 
         const reactivationCountdown = task.completed && task.recurring ? `<div class="meta-item reactivation-countdown"><i class="ph-fill ph-timer"></i><span></span></div>` : '';
 
@@ -322,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h4>${task.title}</h4>
                 </div>
                 <div class="task-meta">
-                    <div class="meta-item"><i class="ph-light ph-calendar"></i><span>${formattedDate}</span></div>
+                    <div class="meta-item"><i class="ph-light ph-calendar"></i><span>${dateDisplay}</span></div>
                     <div class="meta-item"><i class="ph-light ph-clock"></i><span>${timeDisplay}</span></div>
                     <div class="meta-item"><i class="ph-light ph-tag"></i><span>${task.category}</span></div>
                     <div class="meta-item"><i class="ph-light ph-flag"></i><span>${task.priority}</span></div>
@@ -458,6 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const dateValue = document.getElementById('date').value;
+        const endDateValue = document.getElementById('endDate').value;
         const today = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
         if (dateValue === today && timeValue) {
             const now = new Date();
@@ -472,6 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
             title: document.getElementById('title').value,
             description: document.getElementById('description').value,
             date: dateValue,
+            endDate: endDateValue,
             time: timeValue ? `${timeValue}:00` : null,
             category: document.getElementById('category').value,
             priority: document.getElementById('priority').value,
@@ -559,6 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('title').value = task.title;
         document.getElementById('description').value = task.description;
         document.getElementById('date').value = task.date;
+        document.getElementById('endDate').value = task.endDate;
         document.getElementById('time').value = task.time ? task.time.substring(0, 5) : "";
         document.getElementById('category').value = task.category;
         document.getElementById('priority').value = task.priority;
@@ -1020,6 +1033,39 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         return `ph ${icons[weatherCode] || 'ph-fill ph-question'}`;
     }
+
+    function formatStopwatchTime() {
+        const hours = Math.floor(stopwatchTime / 3600).toString().padStart(2, '0');
+        const minutes = Math.floor((stopwatchTime % 3600) / 60).toString().padStart(2, '0');
+        const seconds = (stopwatchTime % 60).toString().padStart(2, '0');
+        stopwatchDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    function toggleStopwatch() {
+        if (stopwatchRunning) {
+            clearInterval(stopwatchInterval);
+            startStopBtn.textContent = 'Retomar';
+        } else {
+            stopwatchInterval = setInterval(() => {
+                stopwatchTime++;
+                formatStopwatchTime();
+            }, 1000);
+            startStopBtn.textContent = 'Pausar';
+        }
+        stopwatchRunning = !stopwatchRunning;
+    }
+
+    function resetStopwatch() {
+        clearInterval(stopwatchInterval);
+        stopwatchRunning = false;
+        stopwatchTime = 0;
+        formatStopwatchTime();
+        startStopBtn.textContent = 'Iniciar';
+    }
+
+    startStopBtn.addEventListener('click', toggleStopwatch);
+    resetBtn.addEventListener('click', resetStopwatch);
+
 
     window.addEventListener('click', (event) => {
       if (event.target === taskModal) closeModal();

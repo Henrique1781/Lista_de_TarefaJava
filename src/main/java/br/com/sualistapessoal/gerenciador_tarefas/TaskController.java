@@ -60,6 +60,7 @@ public class TaskController {
             task.setWithNotification(taskDetails.isWithNotification());
             task.setRecurring(taskDetails.isRecurring());
             task.setNotificationState(taskDetails.getNotificationState());
+            task.setEndDate(taskDetails.getEndDate()); // ADICIONADO
 
             Task updatedTask = taskRepository.save(task);
             return ResponseEntity.ok(updatedTask);

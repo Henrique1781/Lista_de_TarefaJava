@@ -20,6 +20,7 @@ public class Task {
     private String category;
     private String priority;
     private boolean completed = false; // Por padrão, uma nova tarefa não está completa
+    private LocalDate endDate; // NOVO CAMPO
 
     // NOVOS CAMPOS
     private boolean withNotification = false;
@@ -129,4 +130,11 @@ public class Task {
         this.user = user;
     }
 
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+    }
 }
