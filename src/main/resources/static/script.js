@@ -81,6 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const stopwatchDisplay = document.getElementById('stopwatch-display');
     const startStopBtn = document.getElementById('start-stop-btn');
     const resetBtn = document.getElementById('reset-btn');
+    
+    const recurringCheckbox = document.getElementById('recurring');
+    const addEndDateCheckbox = document.getElementById('addEndDate');
+    const endDateGroup = document.getElementById('end-date-group');
+    const dateFieldsContainer = document.getElementById('date-fields-container');
 
     // --- 2. ESTADO DA APLICAÇÃO ---
     let allTasks = [];
@@ -105,6 +110,18 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     let taskCheckInterval;
     let autoRefreshInterval;
+    
+    addEndDateCheckbox.addEventListener('change', (e) => {
+        endDateGroup.classList.toggle('hidden', !e.target.checked);
+    });
+
+    recurringCheckbox.addEventListener('change', (e) => {
+        dateFieldsContainer.classList.toggle('hidden', e.target.checked);
+        if (e.target.checked) {
+            addEndDateCheckbox.checked = false;
+            endDateGroup.classList.add('hidden');
+        }
+    });
 
     function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -479,16 +496,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        const isRecurring = document.getElementById('recurring').checked;
+
         const taskData = {
             title: document.getElementById('title').value,
             description: document.getElementById('description').value,
-            date: dateValue,
-            endDate: endDateValue,
+            date: isRecurring ? null : dateValue,
+            endDate: (isRecurring || !addEndDateCheckbox.checked) ? null : endDateValue,
             time: timeValue ? `${timeValue}:00` : null,
             category: document.getElementById('category').value,
             priority: document.getElementById('priority').value,
             withNotification: document.getElementById('withNotification').checked,
-            recurring: document.getElementById('recurring').checked,
+            recurring: isRecurring,
             completed: id ? allTasks.find(t => t.id == id).completed : false,
             notificationState: 0
         };
@@ -576,7 +595,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('category').value = task.category;
         document.getElementById('priority').value = task.priority;
         document.getElementById('withNotification').checked = task.withNotification;
-        document.getElementById('recurring').checked = task.recurring;
+        recurringCheckbox.checked = task.recurring;
+        addEndDateCheckbox.checked = !!task.endDate;
+        
+        dateFieldsContainer.classList.toggle('hidden', task.recurring);
+        endDateGroup.classList.toggle('hidden', !task.endDate);
 
         taskModal.classList.remove('hidden');
     }
@@ -586,6 +609,9 @@ document.addEventListener('DOMContentLoaded', () => {
         saveTaskBtn.innerHTML = '<i class="ph-bold ph-plus"></i> Adicionar Tarefa';
         taskForm.reset();
         hiddenTaskId.value = '';
+        
+        dateFieldsContainer.classList.remove('hidden');
+        endDateGroup.classList.add('hidden');
 
         const defaultDate = setDateInputMin();
         document.getElementById('date').value = defaultDate;
@@ -1167,5 +1193,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     registerServiceWorker();
-    startSelfPing(); // --- MUDANÇA: Atualizando a cada 10 segundos ---
+    startSelfPing();
 });
